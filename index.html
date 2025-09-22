@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <title>Abyss Veil</title>
+    <style>
+      html, body, #app { height: 100%; margin: 0; background: #0b0f16; }
+      .stage { position: fixed; inset: 0; }
+    </style>
+  </head>
+  <body>
+    <div id="app">
+      <abyss-veil
+      exposure="-0.3"
+      twinkle-speed="0.5"
+      twinkle-amount="0.5"
+      aurora-amplitude="1"
+      aurora-blend="5"
+      aurora-speed="1"
+      aurora-stops="#7921a8,#7cff67,#5227FF"
+      aurora-strength="0.5"
+      shooting-rate="15"
+      shooting-speed="1500"
+      shooting-length="400"
+      shooting-width="2"
+      shooting-brightness="1.5"
+      nebula-density="10.0"
+      nebula-g="-0.6"
+      nebula-vibrancy="1"
+      nebula-flow-speed="0.38"
+      nebula-flow-amp="0.14"
+      nebula-swirl="1.6"
+      lens-mode="glass"
+      lens-radius="400"
+      lens-zoom="1.5"
+      lens-dispersion="0.3"
+      lens-bloom-strength="2"
+      lens-bloom-threshold="0.0"
+      lens-bloom-radius="1"
+      lens-streak-strength="1.5"
+      lens-streak-length="17"
+      lens-streak-angle="0"
+    ></abyss-veil>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
