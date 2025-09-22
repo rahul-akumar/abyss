@@ -1,4 +1,4 @@
-export type GalaxyImpostorData = Float32Array; // interleaved per-instance: centerU, centerV, sizePx, angleRad, axisRatio, colorBias, brightness
+export type GalaxyImpostorData = Float32Array<ArrayBuffer>; // interleaved per-instance: centerU, centerV, sizePx, angleRad, axisRatio, colorBias, brightness
 
 export interface GalaxyImpostorOptions {
   count: number;
@@ -19,7 +19,7 @@ export function generateGalaxyImpostors(opts: GalaxyImpostorOptions): GalaxyImpo
   const vRange = opts.vRange; // if set, we will sample v uniformly
   const [sMin, sMax] = opts.sizePxRange ?? [14, 48];
 
-  const data = new Float32Array(count * 7);
+  const data: GalaxyImpostorData = new Float32Array(new ArrayBuffer(count * 7 * 4));
   for (let i = 0; i < count; i++) {
     // Position in band frame
     const u = randRange(rand, uMin, uMax);

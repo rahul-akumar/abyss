@@ -339,7 +339,7 @@ export class WebGL2Engine implements IRenderer {
         gl.clearColor(0,0,0,1); gl.clear(gl.COLOR_BUFFER_BIT);
         gl.bindFramebuffer(gl.FRAMEBUFFER, this.fboGalaxyBand!);
         gl.clearColor(0,0,0,1); gl.clear(gl.COLOR_BUFFER_BIT);
-        gl.bindFramebuffer(gl.FRAMEBUFFER, this.fboGalaxyImp);
+        gl.bindFramebuffer(gl.FRAMEBUFFER, this.fboGalaxyImp ?? null);
         gl.clearColor(0,0,0,1); gl.clear(gl.COLOR_BUFFER_BIT);
       }
 

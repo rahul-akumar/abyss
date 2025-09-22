@@ -1,4 +1,4 @@
-export type StarData = Float32Array; // interleaved: posX, posY, sizePx, rLin, gLin, bLin
+export type StarData = Float32Array<ArrayBuffer>; // interleaved: posX, posY, sizePx, rLin, gLin, bLin
 
 export interface StarGenOptions {
   count: number;
@@ -21,7 +21,7 @@ export function generateStars(opts: StarGenOptions): StarData {
   const sigma = opts.bandSigma ?? 0.25;
   const bandW = Math.min(1, Math.max(0, opts.bandWeight ?? 0.7));
 
-  const data = new Float32Array(count * 6);
+  const data: StarData = new Float32Array(new ArrayBuffer(count * 6 * 4));
 
   for (let i = 0; i < count; i++) {
     // Choose whether this star belongs to the band or uniform background
