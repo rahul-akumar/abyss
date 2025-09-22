@@ -4,6 +4,7 @@ import { WebGPUGalaxyPass } from './galaxy/webgpuGalaxyPass';
 import { WebGPUCompositePass } from './composite/webgpuCompositePass';
 import { WebGPUNebulaPass } from './nebula/webgpuNebulaPass';
 import { WebGPULensPass } from './lens/webgpuLensPass';
+import { generateNebulaVolumes } from './nebula/generateVolumes';
 import { WebGPUMeteorPass } from './meteors/webgpuMeteorPass';
 import { WebGPUBlackHolePass } from './blackhole/webgpuBlackHolePass';
 import { WebGPUAuroraPass } from './aurora/webgpuAuroraPass';
@@ -90,6 +91,23 @@ export class WebGPUEngine implements IRenderer {
   setTwinkleAmount(amount: number) { this.twinkleAmount = Math.max(0, Math.min(1, amount)); if (this.stars) (this.stars as any).setTwinkleAmount?.(this.twinkleAmount); }
   setNebulaParams(density: number, g: number) { this.nebulaDensity = density; this.nebulaG = g; if (this.nebula) this.nebula.setParams(density, g); }
   setNebulaVibrancy(v: number) { this.nebulaVibrancy = Math.max(0, Math.min(1, v)); if (this.nebula) (this.nebula as any).setVibrancy?.(this.nebulaVibrancy); }
+  // New granular nebula flow setters to satisfy IRenderer
+  setNebulaFlowSpeed(speed: number) {
+    this.nebulaFlowSpeed = speed;
+    if (this.nebula) (this.nebula as any).setFlowParams?.(this.nebulaFlowSpeed, this.nebulaFlowAmp, this.nebulaSwirl, this.nebulaDriftX, this.nebulaDriftY, this.nebulaWarpSpeed);
+  }
+  setNebulaFlowAmp(amp: number) {
+    this.nebulaFlowAmp = amp;
+    if (this.nebula) (this.nebula as any).setFlowParams?.(this.nebulaFlowSpeed, this.nebulaFlowAmp, this.nebulaSwirl, this.nebulaDriftX, this.nebulaDriftY, this.nebulaWarpSpeed);
+  }
+  setNebulaSwirl(swirl: number) {
+    this.nebulaSwirl = swirl;
+    if (this.nebula) (this.nebula as any).setFlowParams?.(this.nebulaFlowSpeed, this.nebulaFlowAmp, this.nebulaSwirl, this.nebulaDriftX, this.nebulaDriftY, this.nebulaWarpSpeed);
+  }
+  setNebulaDriftX(driftX: number) {
+    this.nebulaDriftX = driftX;
+    if (this.nebula) (this.nebula as any).setFlowParams?.(this.nebulaFlowSpeed, this.nebulaFlowAmp, this.nebulaSwirl, this.nebulaDriftX, this.nebulaDriftY, this.nebulaWarpSpeed);
+  }
   setNebulaFlow(flowSpeed: number, flowAmp: number, swirl: number, driftX: number, driftY: number, warpSpeed: number) {
     this.nebulaFlowSpeed = flowSpeed; this.nebulaFlowAmp = flowAmp; this.nebulaSwirl = swirl; this.nebulaDriftX = driftX; this.nebulaDriftY = driftY; this.nebulaWarpSpeed = warpSpeed;
     if (this.nebula) (this.nebula as any).setFlowParams?.(flowSpeed, flowAmp, swirl, driftX, driftY, warpSpeed);

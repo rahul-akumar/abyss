@@ -99,6 +99,23 @@ export class WebGL2Engine implements IRenderer {
   setTwinkleAmount(amount: number) { this.twinkleAmount = Math.max(0, Math.min(1, amount)); if (this.stars) (this.stars as any).setTwinkleAmount?.(this.twinkleAmount); }
   setNebulaParams(density: number, g: number) { if (this.nebula) this.nebula.setParams(density, g); }
   setNebulaVibrancy(v: number) { this.nebulaVibrancy = Math.max(0, Math.min(1, v)); if (this.nebula) (this.nebula as any).setVibrancy?.(this.nebulaVibrancy); }
+  // New granular nebula flow setters to satisfy IRenderer
+  setNebulaFlowSpeed(speed: number) {
+    this.nebulaFlowSpeed = speed;
+    if (this.nebula) (this.nebula as any).setFlowParams?.(this.nebulaFlowSpeed, this.nebulaFlowAmp, this.nebulaSwirl, this.nebulaDriftX, this.nebulaDriftY, this.nebulaWarpSpeed);
+  }
+  setNebulaFlowAmp(amp: number) {
+    this.nebulaFlowAmp = amp;
+    if (this.nebula) (this.nebula as any).setFlowParams?.(this.nebulaFlowSpeed, this.nebulaFlowAmp, this.nebulaSwirl, this.nebulaDriftX, this.nebulaDriftY, this.nebulaWarpSpeed);
+  }
+  setNebulaSwirl(swirl: number) {
+    this.nebulaSwirl = swirl;
+    if (this.nebula) (this.nebula as any).setFlowParams?.(this.nebulaFlowSpeed, this.nebulaFlowAmp, this.nebulaSwirl, this.nebulaDriftX, this.nebulaDriftY, this.nebulaWarpSpeed);
+  }
+  setNebulaDriftX(driftX: number) {
+    this.nebulaDriftX = driftX;
+    if (this.nebula) (this.nebula as any).setFlowParams?.(this.nebulaFlowSpeed, this.nebulaFlowAmp, this.nebulaSwirl, this.nebulaDriftX, this.nebulaDriftY, this.nebulaWarpSpeed);
+  }
   setNebulaFlow(flowSpeed: number, flowAmp: number, swirl: number, driftX: number, driftY: number, warpSpeed: number) {
     this.nebulaFlowSpeed = flowSpeed; this.nebulaFlowAmp = flowAmp; this.nebulaSwirl = swirl; this.nebulaDriftX = driftX; this.nebulaDriftY = driftY; this.nebulaWarpSpeed = warpSpeed;
     if (this.nebula) (this.nebula as any).setFlowParams?.(flowSpeed, flowAmp, swirl, driftX, driftY, warpSpeed);
@@ -194,7 +211,7 @@ export class WebGL2Engine implements IRenderer {
     (this.nebula as any).setNoiseScale?.(this.sampScaleX, this.sampScaleY, this.sampScaleZ);
 
     // Create and upload 3D volumes
-    const { size: VS, density: volD, warp: volW } = generateNebulaVolumes(64, 1337);
+    const { size: VS, density: volD, warp: volW } = generateNebulaVolumes({ size: 64, seed: 1337 });
     this.texDensity3D = gl.createTexture()!;
     gl.bindTexture(gl.TEXTURE_3D, this.texDensity3D);
     gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
@@ -296,7 +313,7 @@ export class WebGL2Engine implements IRenderer {
       // Galaxy layers
       if (this.showGalaxy) {
         // Band only -> band FBO
-        gl.bindFramebuffer(gl.FRAMEBUFFER, this.fboGalaxyBand);
+        gl.bindFramebuffer(gl.FRAMEBUFFER, this.fboGalaxyBand!);
         gl.viewport(0, 0, this.canvas.width, this.canvas.height);
         gl.clearColor(0,0,0,1);
         gl.clear(gl.COLOR_BUFFER_BIT);
@@ -310,7 +327,8 @@ export class WebGL2Engine implements IRenderer {
         // Impostors into combined (additive)
         this.galaxy.renderImpostors();
         // Impostors only -> separate impostor FBO
-        gl.bindFramebuffer(gl.FRAMEBUFFER, this.fboGalaxyImp);
+        gl.bindFramebuffer(gl.FRAMEBUFFER, this.fboGalaxyImp!);
+
         gl.viewport(0, 0, this.canvas.width, this.canvas.height);
         gl.clearColor(0,0,0,1);
         gl.clear(gl.COLOR_BUFFER_BIT);
@@ -319,7 +337,7 @@ export class WebGL2Engine implements IRenderer {
         // Clear galaxy FBOs
         gl.bindFramebuffer(gl.FRAMEBUFFER, this.fboGalaxy);
         gl.clearColor(0,0,0,1); gl.clear(gl.COLOR_BUFFER_BIT);
-        gl.bindFramebuffer(gl.FRAMEBUFFER, this.fboGalaxyBand);
+        gl.bindFramebuffer(gl.FRAMEBUFFER, this.fboGalaxyBand!);
         gl.clearColor(0,0,0,1); gl.clear(gl.COLOR_BUFFER_BIT);
         gl.bindFramebuffer(gl.FRAMEBUFFER, this.fboGalaxyImp);
         gl.clearColor(0,0,0,1); gl.clear(gl.COLOR_BUFFER_BIT);
