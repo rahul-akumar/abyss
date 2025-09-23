@@ -31,7 +31,7 @@ export class AbyssVeilElement extends HTMLElement {
   #starAttractorStrength = -80;
 
   static get observedAttributes() {
-    return ['preset', 'quality', 'reduce-motion', 'exposure', 'star-count', 'star-intensity', 'twinkle-speed', 'twinkle-amount', 'nebula-density', 'nebula-g', 'nebula-vibrancy', 'nebula-flow-speed', 'nebula-flow-amp', 'nebula-swirl', 'lens-radius', 'lens-zoom', 'lens-dispersion', 'bh-enabled', 'bh-mass', 'bh-spin', 'lens-bloom-strength', 'lens-bloom-threshold', 'lens-bloom-radius', 'lens-streak-strength', 'lens-streak-length', 'lens-streak-angle', 'shooting-enabled', 'shooting-rate', 'shooting-speed', 'shooting-length', 'shooting-width', 'shooting-brightness', 'show-stars', 'show-galaxy', 'show-nebula', 'lens-enabled', 'show-aurora', 'aurora-amplitude', 'aurora-blend', 'aurora-speed', 'aurora-stops', 'aurora-strength'];
+    return ['preset', 'quality', 'reduce-motion', 'exposure', 'star-count', 'star-intensity', 'twinkle-speed', 'twinkle-amount', 'nebula-density', 'nebula-g', 'nebula-vibrancy', 'nebula-flow-speed', 'nebula-flow-amp', 'nebula-swirl', 'lens-radius', 'lens-zoom', 'lens-dispersion', 'bh-enabled', 'bh-mass', 'bh-spin', 'lens-bloom-strength', 'lens-bloom-threshold', 'lens-bloom-radius', 'lens-streak-strength', 'lens-streak-length', 'lens-streak-angle', 'shooting-enabled', 'shooting-rate', 'shooting-speed', 'shooting-length', 'shooting-width', 'shooting-brightness', 'show-stars', 'show-galaxy', 'show-nebula', 'lens-enabled', 'show-aurora', 'show-info', 'aurora-amplitude', 'aurora-blend', 'aurora-speed', 'aurora-stops', 'aurora-strength'];
   }
 
   constructor() {
@@ -105,6 +105,14 @@ export class AbyssVeilElement extends HTMLElement {
     this.#shadow.appendChild(wrap);
   }
 
+  // Update visibility of external info/copyright badge
+  #updateInfoVisibility(show: boolean) {
+    try {
+      const badge = document.querySelector('.copyright-badge') as HTMLElement | null;
+      if (badge) badge.style.display = show ? '' : 'none';
+    } catch {}
+  }
+
   connectedCallback() {
     const preset = (this.getAttribute('preset') || 'glass') as Preset;
     const quality = (this.getAttribute('quality') || 'auto') as Quality;
@@ -158,7 +166,9 @@ export class AbyssVeilElement extends HTMLElement {
     this.#engine.setNebulaParams(nebulaDensity, nebulaG);
     (this.#engine as any).setNebulaVibrancy?.(nebulaVibrancy);
     this.#engine.setLensParams(lensRadius, lensZoom, lensDispersion);
-    (this.#engine as any).setNebulaFlow?.(nebulaFlowSpeed, nebulaFlowAmp, nebulaSwirl, 0.03, 0.0, 0.12);
+    this.#engine.setNebulaFlowSpeed(nebulaFlowSpeed);
+    this.#engine.setNebulaFlowAmp(nebulaFlowAmp);
+    this.#engine.setNebulaSwirl(nebulaSwirl);
     this.#engine.setBlackHoleEnabled?.(bhEnabled as any);
     this.#engine.setBHParams(bhMass, bhSpin);
     this.#engine.setShowStars(showStars);
@@ -175,6 +185,7 @@ export class AbyssVeilElement extends HTMLElement {
 
     // Aurora setup (defaults emulate the provided reference)
     const showAurora = (() => { const v = this.getAttribute('show-aurora'); return v != null ? v !== 'false' : false; })();
+    const showInfo = (() => { const v = this.getAttribute('show-info'); return v != null ? v !== 'false' : true; })();
     const auroraAmplitude = (() => { const v = this.getAttribute('aurora-amplitude'); return v != null ? parseFloat(v) : 1.0; })();
     const auroraBlend = (() => { const v = this.getAttribute('aurora-blend'); return v != null ? parseFloat(v) : 0.5; })();
     const auroraSpeed = (() => { const v = this.getAttribute('aurora-speed'); return v != null ? parseFloat(v) : 1.0; })();
@@ -198,6 +209,9 @@ export class AbyssVeilElement extends HTMLElement {
 
     this.#engine.start();
 
+    // Apply initial info visibility (default on)
+    this.#updateInfoVisibility(showInfo);
+    requestAnimationFrame(() => this.#updateInfoVisibility(showInfo));
 
     // Bind UI events
     this.#bindControls();
@@ -379,17 +393,19 @@ export class AbyssVeilElement extends HTMLElement {
       const dAttr = this.getAttribute('nebula-density');
       const gAttr = this.getAttribute('nebula-g');
       const density = dAttr != null ? Math.max(0, Math.min(1, parseFloat(dAttr))) : 0.5;
-      const g = gAttr != null ? parseFloat(gAttr) : 0.2;
+      const g = gAttr != null ? Math.max(0, Math.min(1, parseFloat(gAttr))) : 0.2;
       this.#engine.setNebulaParams(density, g);
     } else if (name === 'nebula-vibrancy') {
       const vAttr = this.getAttribute('nebula-vibrancy');
       const vib = vAttr != null ? Math.max(0, Math.min(1, parseFloat(vAttr))) : 1.0;
-      (this.#engine as any).setNebulaVibrancy?.(vib);
+      this.#engine.setNebulaVibrancy(vib);
     } else if (name === 'nebula-flow-speed' || name === 'nebula-flow-amp' || name === 'nebula-swirl') {
       const flowSpeed = (() => { const v = this.getAttribute('nebula-flow-speed'); return v != null ? parseFloat(v) : 0.38; })();
       const flowAmp = (() => { const v = this.getAttribute('nebula-flow-amp'); return v != null ? parseFloat(v) : 0.14; })();
       const swirl = (() => { const v = this.getAttribute('nebula-swirl'); return v != null ? parseFloat(v) : 1.6; })();
-      (this.#engine as any).setNebulaFlow?.(flowSpeed, flowAmp, swirl, 0.03, 0.0, 0.12);
+      this.#engine.setNebulaFlowSpeed(flowSpeed);
+      this.#engine.setNebulaFlowAmp(flowAmp);
+      this.#engine.setNebulaSwirl(swirl);
     } else if (name === 'lens-radius' || name === 'lens-zoom' || name === 'lens-dispersion') {
       const rAttr = this.getAttribute('lens-radius');
       if (rAttr != null) this.#lensRadius = Math.max(10, parseFloat(rAttr));
@@ -462,6 +478,10 @@ export class AbyssVeilElement extends HTMLElement {
       const sAttr = this.getAttribute('aurora-strength');
       const s = sAttr != null ? Math.max(0, parseFloat(sAttr)) : 1.0;
       (this.#engine as any).setAuroraStrength?.(s);
+    } else if (name === 'show-info') {
+      const v = this.getAttribute('show-info');
+      const show = v != null ? v !== 'false' : true;
+      this.#updateInfoVisibility(show);
     } else if (name === 'lens-enabled') {
       const v = this.getAttribute('lens-enabled');
       const enabled = v != null ? v !== 'false' : true;
@@ -531,6 +551,12 @@ export class AbyssVeilElement extends HTMLElement {
             <input type="checkbox" id="chk-bh">
             <span class="slider"></span>
           </label>
+
+          <span>Info</span>
+          <label class="switch">
+            <input type="checkbox" id="chk-info" checked>
+            <span class="slider"></span>
+          </label>
         </div>
       </div>
       <div class="section">
@@ -554,12 +580,9 @@ export class AbyssVeilElement extends HTMLElement {
       </details>
       <details open>
         <summary>Nebula</summary>
-        <div class="row"><label>Density</label><input type="range" id="rng-nebula-density" min="0" max="1" step="0.01" value="0.5"><span id="val-nebula-density" class="muted">0.50</span></div>
-        <div class="row"><label>g (anisotropy)</label><input type="range" id="rng-nebula-g" min="-0.5" max="0.9" step="0.05" value="0.2"><span id="val-nebula-g" class="muted">0.20</span></div>
         <div class="row"><label>Vibrancy</label><input type="range" id="rng-nebula-vibrancy" min="0" max="1" step="0.01" value="1.00"><span id="val-nebula-vibrancy" class="muted">1.00</span></div>
         <div class="row"><label>Flow speed</label><input type="range" id="rng-nebula-flow-speed" min="0" max="2.0" step="0.01" value="0.38"><span id="val-nebula-flow-speed" class="muted">0.38</span></div>
         <div class="row"><label>Curl amp</label><input type="range" id="rng-nebula-flow-amp" min="0" max="0.5" step="0.005" value="0.14"><span id="val-nebula-flow-amp" class="muted">0.14</span></div>
-        <div class="row"><label>Swirl</label><input type="range" id="rng-nebula-swirl" min="0.5" max="3.0" step="0.05" value="1.60"><span id="val-nebula-swirl" class="muted">1.60</span></div>
       </details>
       <details open>
         <summary>Aurora</summary>
@@ -621,6 +644,7 @@ export class AbyssVeilElement extends HTMLElement {
     initBool('#chk-lens', 'lens-enabled', true);
     initBool('#chk-bh', 'bh-enabled', false);
     initBool('#chk-shooting-vis', 'shooting-enabled', true);
+    initBool('#chk-info', 'show-info', true);
 
     initNum('#rng-exposure', 'exposure', 0, (n)=>n.toFixed(1));
     initNum('#rng-star-count', 'star-count', 30000, (n)=>n.toFixed(0));
@@ -633,12 +657,9 @@ export class AbyssVeilElement extends HTMLElement {
     initNum('#rng-shooting-width', 'shooting-width', 2, (n)=>n.toFixed(0));
     initNum('#rng-shooting-brightness', 'shooting-brightness', 1.5, (n)=>n.toFixed(1));
     initNum('#rng-aurora-strength', 'aurora-strength', 1.0, (n)=>n.toFixed(2));
-    initNum('#rng-nebula-density', 'nebula-density', 0.5, (n)=>n.toFixed(2));
-    initNum('#rng-nebula-g', 'nebula-g', 0.2, (n)=>n.toFixed(2));
     initNum('#rng-nebula-vibrancy', 'nebula-vibrancy', 1.0, (n)=>n.toFixed(2));
     initNum('#rng-nebula-flow-speed', 'nebula-flow-speed', 0.38, (n)=>n.toFixed(2));
     initNum('#rng-nebula-flow-amp', 'nebula-flow-amp', 0.14, (n)=>n.toFixed(2));
-    initNum('#rng-nebula-swirl', 'nebula-swirl', 1.6, (n)=>n.toFixed(2));
     initNum('#rng-lens-radius', 'lens-radius', 200, (n)=>n.toFixed(0));
     initNum('#rng-lens-zoom', 'lens-zoom', 1.25, (n)=>n.toFixed(2));
     initNum('#rng-lens-dispersion', 'lens-dispersion', 0.35, (n)=>n.toFixed(2));
@@ -673,6 +694,9 @@ export class AbyssVeilElement extends HTMLElement {
     (this.#controls!.querySelector('#chk-shooting-vis') as HTMLInputElement).addEventListener('change', (e) => {
       const v = (e.target as HTMLInputElement).checked; this.setAttribute('shooting-enabled', String(v));
     });
+    (this.#controls!.querySelector('#chk-info') as HTMLInputElement).addEventListener('change', (e) => {
+      const v = (e.target as HTMLInputElement).checked; this.setAttribute('show-info', String(v));
+    });
     // Nebula sliders
     const bindRange = (rngId: string, attr: string, fmt: (n: number)=>string = (n)=>n.toFixed(2)) => {
       const el = this.#controls!.querySelector(rngId) as HTMLInputElement;
@@ -680,12 +704,9 @@ export class AbyssVeilElement extends HTMLElement {
         const val = (e.target as HTMLInputElement).valueAsNumber; this.setAttribute(attr, String(val)); setText(rngId.replace('rng','val'), fmt(val));
       });
     };
-    bindRange('#rng-nebula-density', 'nebula-density', (n)=>n.toFixed(2));
-    bindRange('#rng-nebula-g', 'nebula-g', (n)=>n.toFixed(2));
     bindRange('#rng-nebula-vibrancy', 'nebula-vibrancy', (n)=>n.toFixed(2));
     bindRange('#rng-nebula-flow-speed', 'nebula-flow-speed');
     bindRange('#rng-nebula-flow-amp', 'nebula-flow-amp');
-    bindRange('#rng-nebula-swirl', 'nebula-swirl');
 
     (this.#controls!.querySelector('#rng-exposure') as HTMLInputElement).addEventListener('input', (e) => {
       const v = (e.target as HTMLInputElement).valueAsNumber; setText('#val-exposure', v.toFixed(1)); this.setAttribute('exposure', String(v));
@@ -704,15 +725,6 @@ export class AbyssVeilElement extends HTMLElement {
     });
     (this.#controls!.querySelector('#rng-aurora-strength') as HTMLInputElement).addEventListener('input', (e) => {
       const v = (e.target as HTMLInputElement).valueAsNumber; setText('#val-aurora-strength', v.toFixed(2)); this.setAttribute('aurora-strength', String(v));
-    });
-    (this.#controls!.querySelector('#rng-nebula-density') as HTMLInputElement).addEventListener('input', (e) => {
-      const v = (e.target as HTMLInputElement).valueAsNumber; setText('#val-nebula-density', v.toFixed(2)); this.setAttribute('nebula-density', String(v));
-    });
-    (this.#controls!.querySelector('#rng-nebula-g') as HTMLInputElement).addEventListener('input', (e) => {
-      const v = (e.target as HTMLInputElement).valueAsNumber; setText('#val-nebula-g', v.toFixed(2)); this.setAttribute('nebula-g', String(v));
-    });
-    (this.#controls!.querySelector('#rng-nebula-vibrancy') as HTMLInputElement).addEventListener('input', (e) => {
-      const v = (e.target as HTMLInputElement).valueAsNumber; setText('#val-nebula-vibrancy', v.toFixed(2)); this.setAttribute('nebula-vibrancy', String(v));
     });
 
     (this.#controls!.querySelector('#rng-lens-radius') as HTMLInputElement).addEventListener('input', (e) => {
