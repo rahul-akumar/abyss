@@ -22,6 +22,8 @@ export class WebGPUStarPass {
   private forceRadiusPx = 0.0; private forceStrengthPx = 0.0;
   private shockCenterX = 0.0; private shockCenterY = 0.0;
   private shockStartTime = -1.0; private shockSpeedPx = 1000.0; private shockAmpPx = 60.0; private shockWidthPx = 80.0; private shockDamp = 2.0;
+  // Black hole attractor (normalized center, px radius, mass)
+  private bhCenterX = 0.5; private bhCenterY = 0.5; private bhRadiusPx = 100.0; private bhMass = 0.0;
 
   constructor(device: GPUDevice, format: GPUTextureFormat, starCount: number) {
     this.device = device;
@@ -38,6 +40,14 @@ export class WebGPUStarPass {
   // Interaction API
   setCursor(xPx: number, yPx: number) { this.mousePxX = xPx; this.mousePxY = yPx; this.updateUniforms(); }
   setCursorForce(radiusPx: number, strengthPx: number) { this.forceRadiusPx = Math.max(0, radiusPx); this.forceStrengthPx = strengthPx; this.updateUniforms(); }
+  // Black hole attractor API (enable by setting mass>0)
+  setBHAttractor(cxNorm: number, cyNorm: number, radiusPx: number, mass: number) {
+    this.bhCenterX = Math.max(0, Math.min(1, cxNorm));
+    this.bhCenterY = Math.max(0, Math.min(1, cyNorm));
+    this.bhRadiusPx = Math.max(0, radiusPx);
+    this.bhMass = Math.max(0, mass);
+    this.updateUniforms();
+  }
   triggerShockwave(xPx: number, yPx: number, ampPx: number = 60, speedPx: number = 1000, widthPx: number = 80, damp: number = 2.0) {
     this.shockCenterX = xPx; this.shockCenterY = yPx; this.shockAmpPx = ampPx; this.shockSpeedPx = speedPx; this.shockWidthPx = widthPx; this.shockDamp = Math.max(0, damp);
     this.shockStartTime = this.time; this.updateUniforms();
@@ -81,9 +91,10 @@ export class WebGPUStarPass {
     // [4]=time, [5]=twinkleSpeed, [6]=twinkleAmount, [7]=pad,
     // [8]=mouse.x, [9]=mouse.y, [10]=forceRadiusPx, [11]=forceStrengthPx,
     // [12]=shock.cx, [13]=shock.cy, [14]=shockStartTime, [15]=shockSpeedPx,
-    // [16]=shockAmpPx, [17]=shockWidthPx, [18]=shockDamp, [19]=pad
+    // [16]=shockAmpPx, [17]=shockWidthPx, [18]=shockDamp, [19]=pad,
+    // [20]=bhCenterXNorm, [21]=bhCenterYNorm, [22]=bhRadiusPx, [23]=bhMass
     this.uniformBuf = this.device.createBuffer({
-      size: 20 * 4,
+      size: 24 * 4,
       usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
     });
 
@@ -155,6 +166,7 @@ export class WebGPUStarPass {
       this.mousePxX, this.mousePxY, this.forceRadiusPx, this.forceStrengthPx,
       this.shockCenterX, this.shockCenterY, this.shockStartTime, this.shockSpeedPx,
       this.shockAmpPx, this.shockWidthPx, this.shockDamp, 0,
+      this.bhCenterX, this.bhCenterY, this.bhRadiusPx, this.bhMass,
     ]);
     this.device.queue.writeBuffer(this.uniformBuf, 0, data);
   }
@@ -179,6 +191,9 @@ struct Uniforms {
   shockWidthPx : f32,
   shockDamp : f32,
   _pad1 : f32,
+  bhCenterNorm : vec2<f32>,
+  bhRadiusPx : f32,
+  bhMass : f32,
 };
 @group(0) @binding(0) var<uniform> U : Uniforms;
 
@@ -235,6 +250,19 @@ fn hash21(p: vec2<f32>) -> f32 {
     if (r2 > 1e-3) {
       let dir2 = d2 / r2;
       dispPx = dispPx + dir2 * (U.shockAmpPx * g * decay);
+    }
+  }
+  // Black hole attractor (gravity-like)
+  if (U.bhMass > 0.0 && U.bhRadiusPx > 0.0) {
+    let cpx = vec2<f32>(U.bhCenterNorm.x * U.resolution.x, U.bhCenterNorm.y * U.resolution.y);
+    let d3 = starPx - cpx;
+    let r3 = length(d3);
+    if (r3 > 1.0) {
+      let rn = r3 / max(U.bhRadiusPx, 1.0);
+      let dir3 = d3 / r3;
+      // Inverse-square falloff with softening to avoid singularity
+      let f = U.bhMass * 40.0 / (rn*rn + 1.0);
+      dispPx = dispPx - dir3 * f;
     }
   }
   let ndc = input.starPos + vec2<f32>(dispPx.x * px2ndc.x, -dispPx.y * px2ndc.y) + input.pos * input.starSize * px2ndc;

@@ -39,6 +39,8 @@ export interface IRenderer {
   // Black hole
   setBHParams(mass: number, spin: number): void;
   setBlackHoleEnabled?(enabled: boolean): void;
+  setBHStreaks?(strength: number, lengthPx: number): void;
+  setBHAccretionSpeed?(speed: number): void;
   // Lens effects (glass mode)
   setLensBloom(strength: number, threshold: number, radiusPx: number): void;
   setLensStreaks(strength: number, lengthPx: number, angleDeg: number): void;
@@ -92,6 +94,8 @@ export class Engine implements IRenderer {
   setLensCenter(cx: number, cy: number) { this.backend.setLensCenter(cx, cy); }
   setBHParams(mass: number, spin: number) { this.backend.setBHParams(mass, spin); }
   setBlackHoleEnabled(enabled: boolean) { (this.backend as any).setBlackHoleEnabled?.(enabled); }
+  setBHStreaks(strength: number, lengthPx: number) { (this.backend as any).setBHStreaks?.(strength, lengthPx); }
+  setBHAccretionSpeed(speed: number) { (this.backend as any).setBHAccretionSpeed?.(speed); }
   // Aurora pass-through
   setAuroraEnabled(enabled: boolean) { (this.backend as any).setAuroraEnabled?.(enabled); }
   setAuroraParams(amplitude: number, blend: number, speed: number) { (this.backend as any).setAuroraParams?.(amplitude, blend, speed); }

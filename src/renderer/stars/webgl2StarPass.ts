@@ -22,6 +22,10 @@ export class WebGL2StarPass {
   private uShockAmpPx!: WebGLUniformLocation;
   private uShockWidthPx!: WebGLUniformLocation;
   private uShockDamp!: WebGLUniformLocation;
+  // Black hole attractor uniforms
+  private uBHCenterNorm!: WebGLUniformLocation;
+  private uBHRadPx!: WebGLUniformLocation;
+  private uBHMass!: WebGLUniformLocation;
 
   private exposure = 0.0;
   private starIntensity = 1.0;
@@ -39,6 +43,10 @@ export class WebGL2StarPass {
   private shockAmpPx = 60.0;
   private shockWidthPx = 80.0;
   private shockDamp = 2.0;
+  // Black hole state (normalized center, px radius, mass)
+  private bhCenterNorm = { x: 0.5, y: 0.5 };
+  private bhRadiusPx = 100.0;
+  private bhMass = 0.0;
 
   constructor(gl: WebGL2RenderingContext, starData: Float32Array) {
     this.gl = gl;
@@ -61,6 +69,13 @@ export class WebGL2StarPass {
   // Interaction API
   setCursor(xPx: number, yPx: number) { this.mousePx.x = xPx; this.mousePx.y = yPx; }
   setCursorForce(radiusPx: number, strengthPx: number) { this.forceRadiusPx = Math.max(0, radiusPx); this.forceStrengthPx = strengthPx; }
+  // Black hole attractor API (enable by setting mass>0)
+  setBHAttractor(cxNorm: number, cyNorm: number, radiusPx: number, mass: number) {
+    this.bhCenterNorm.x = Math.max(0, Math.min(1, cxNorm));
+    this.bhCenterNorm.y = Math.max(0, Math.min(1, cyNorm));
+    this.bhRadiusPx = Math.max(0, radiusPx);
+    this.bhMass = Math.max(0, mass);
+  }
   triggerShockwave(xPx: number, yPx: number, ampPx: number = 60, speedPx: number = 1000, widthPx: number = 80, damp: number = 2.0) {
     this.shockCenterPx.x = xPx; this.shockCenterPx.y = yPx;
     this.shockAmpPx = ampPx; this.shockSpeedPx = speedPx; this.shockWidthPx = widthPx; this.shockDamp = Math.max(0, damp);
@@ -117,6 +132,11 @@ export class WebGL2StarPass {
     uniform float uShockWidthPx;                  // px
     uniform float uShockDamp;                     // 1/s
 
+    // Black hole attractor
+    uniform vec2 uBHCenterNorm;                   // normalized [0,1]
+    uniform float uBHRadPx;                       // pixels
+    uniform float uBHMass;                        // unitless scaler
+
     uniform float uTime;                          // seconds
 
     out vec2 vCoord;
@@ -165,6 +185,19 @@ export class WebGL2StarPass {
         if (r2 > 1e-3) {
           vec2 dir2 = d2 / r2;
           dispPx += dir2 * (uShockAmpPx * g * decay);
+        }
+      }
+
+      // Black hole attractor (gravity-like) displacement (in px)
+      if (uBHMass > 0.0 && uBHRadPx > 0.0) {
+        vec2 cpx = vec2(uBHCenterNorm.x * uResolution.x, uBHCenterNorm.y * uResolution.y);
+        vec2 d3 = starPx - cpx;
+        float r3 = length(d3);
+        if (r3 > 1.0) {
+          float rn = r3 / max(uBHRadPx, 1.0);
+          vec2 dir3 = d3 / r3;
+          float f = uBHMass * 40.0 / (rn*rn + 1.0);
+          dispPx -= dir3 * f;
         }
       }
 
@@ -234,6 +267,10 @@ export class WebGL2StarPass {
     this.uShockAmpPx = gl.getUniformLocation(prog, 'uShockAmpPx')!;
     this.uShockWidthPx = gl.getUniformLocation(prog, 'uShockWidthPx')!;
     this.uShockDamp = gl.getUniformLocation(prog, 'uShockDamp')!;
+    // BH attractor uniforms
+    this.uBHCenterNorm = gl.getUniformLocation(prog, 'uBHCenterNorm')!;
+    this.uBHRadPx = gl.getUniformLocation(prog, 'uBHRadPx')!;
+    this.uBHMass = gl.getUniformLocation(prog, 'uBHMass')!;
 
     // VAO setup
     this.vao = gl.createVertexArray()!;
@@ -286,6 +323,10 @@ export class WebGL2StarPass {
     gl.uniform1f(this.uShockAmpPx, this.shockAmpPx);
     gl.uniform1f(this.uShockWidthPx, this.shockWidthPx);
     gl.uniform1f(this.uShockDamp, this.shockDamp);
+    // BH attractor uniforms
+    gl.uniform2f(this.uBHCenterNorm, this.bhCenterNorm.x, this.bhCenterNorm.y);
+    gl.uniform1f(this.uBHRadPx, this.bhRadiusPx);
+    gl.uniform1f(this.uBHMass, this.bhMass);
 
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT);

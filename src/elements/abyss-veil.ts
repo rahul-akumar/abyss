@@ -31,7 +31,7 @@ export class AbyssVeilElement extends HTMLElement {
   #starAttractorStrength = -80;
 
   static get observedAttributes() {
-    return ['preset', 'quality', 'reduce-motion', 'exposure', 'star-count', 'star-intensity', 'twinkle-speed', 'twinkle-amount', 'nebula-density', 'nebula-g', 'nebula-vibrancy', 'nebula-flow-speed', 'nebula-flow-amp', 'nebula-swirl', 'lens-radius', 'lens-zoom', 'lens-dispersion', 'bh-enabled', 'bh-mass', 'bh-spin', 'lens-bloom-strength', 'lens-bloom-threshold', 'lens-bloom-radius', 'lens-streak-strength', 'lens-streak-length', 'lens-streak-angle', 'shooting-enabled', 'shooting-rate', 'shooting-speed', 'shooting-length', 'shooting-width', 'shooting-brightness', 'show-stars', 'show-galaxy', 'show-nebula', 'lens-enabled', 'show-aurora', 'show-info', 'aurora-amplitude', 'aurora-blend', 'aurora-speed', 'aurora-stops', 'aurora-strength'];
+    return ['preset', 'quality', 'reduce-motion', 'exposure', 'star-count', 'star-intensity', 'twinkle-speed', 'twinkle-amount', 'nebula-density', 'nebula-g', 'nebula-vibrancy', 'nebula-flow-speed', 'nebula-flow-amp', 'nebula-swirl', 'lens-radius', 'lens-zoom', 'lens-dispersion', 'bh-enabled', 'bh-mass', 'bh-spin', 'bh-streak-strength', 'bh-streak-length', 'bh-accretion-speed', 'lens-bloom-strength', 'lens-bloom-threshold', 'lens-bloom-radius', 'lens-streak-strength', 'lens-streak-length', 'lens-streak-angle', 'shooting-enabled', 'shooting-rate', 'shooting-speed', 'shooting-length', 'shooting-width', 'shooting-brightness', 'show-stars', 'show-galaxy', 'show-nebula', 'lens-enabled', 'show-aurora', 'show-info', 'aurora-amplitude', 'aurora-blend', 'aurora-speed', 'aurora-stops', 'aurora-strength'];
   }
 
   constructor() {
@@ -135,12 +135,15 @@ export class AbyssVeilElement extends HTMLElement {
     const bhEnabled = (() => { const v = this.getAttribute('bh-enabled'); return v != null ? v !== 'false' : false; })();
     const bhMass = (() => { const v = this.getAttribute('bh-mass'); return v != null ? Math.max(0.1, parseFloat(v)) : 1.0; })();
     const bhSpin = (() => { const v = this.getAttribute('bh-spin'); return v != null ? Math.max(0.0, Math.min(1.0, parseFloat(v))) : 0.7; })();
+    const bhAccretionSpeed = (() => { const v = this.getAttribute('bh-accretion-speed'); return v != null ? Math.max(0, parseFloat(v)) : 0.25; })();
     const lensBloomStrength = (() => { const v = this.getAttribute('lens-bloom-strength'); return v != null ? Math.max(0, parseFloat(v)) : 0.6; })();
     const lensBloomThreshold = (() => { const v = this.getAttribute('lens-bloom-threshold'); return v != null ? Math.max(0, Math.min(1, parseFloat(v))) : 0.7; })();
     const lensBloomRadius = (() => { const v = this.getAttribute('lens-bloom-radius'); return v != null ? Math.max(0, parseFloat(v)) : 8; })();
     const lensStreakStrength = (() => { const v = this.getAttribute('lens-streak-strength'); return v != null ? Math.max(0, parseFloat(v)) : 0.8; })();
     const lensStreakLength = (() => { const v = this.getAttribute('lens-streak-length'); return v != null ? Math.max(0, parseFloat(v)) : 120; })();
     const lensStreakAngle = (() => { const v = this.getAttribute('lens-streak-angle'); return v != null ? parseFloat(v) : 0; })();
+    const bhStreakStrength = (() => { const v = this.getAttribute('bh-streak-strength'); return v != null ? Math.max(0, parseFloat(v)) : 0.8; })();
+    const bhStreakLength = (() => { const v = this.getAttribute('bh-streak-length'); return v != null ? Math.max(0, parseFloat(v)) : 120; })();
 
     const showStars = (() => { const v = this.getAttribute('show-stars'); return v != null ? v !== 'false' : true; })();
     const showGalaxy = (() => { const v = this.getAttribute('show-galaxy'); return v != null ? v !== 'false' : true; })();
@@ -171,6 +174,7 @@ export class AbyssVeilElement extends HTMLElement {
     this.#engine.setNebulaSwirl(nebulaSwirl);
     this.#engine.setBlackHoleEnabled?.(bhEnabled as any);
     this.#engine.setBHParams(bhMass, bhSpin);
+    (this.#engine as any).setBHAccretionSpeed?.(bhAccretionSpeed);
     this.#engine.setShowStars(showStars);
     this.#engine.setShowGalaxy(showGalaxy);
     this.#engine.setShowNebula(showNebula);
@@ -178,6 +182,7 @@ export class AbyssVeilElement extends HTMLElement {
     this.#engine.setLensEnabled(lensEnabled);
     this.#engine.setLensBloom(lensBloomStrength, lensBloomThreshold, lensBloomRadius);
     this.#engine.setLensStreaks(lensStreakStrength, lensStreakLength, lensStreakAngle);
+    (this.#engine as any).setBHStreaks?.(bhStreakStrength, bhStreakLength);
 
     // Shooting stars
     this.#engine.setShootingStarsEnabled(shootingEnabled);
@@ -431,6 +436,16 @@ export class AbyssVeilElement extends HTMLElement {
       const mass = massAttr != null ? Math.max(0.1, parseFloat(massAttr)) : 1.0;
       const spin = spinAttr != null ? Math.max(0.0, Math.min(1.0, parseFloat(spinAttr))) : 0.7;
       this.#engine.setBHParams(mass, spin);
+    } else if (name === 'bh-streak-strength' || name === 'bh-streak-length') {
+      const sAttr = this.getAttribute('bh-streak-strength');
+      const lAttr = this.getAttribute('bh-streak-length');
+      const s = sAttr != null ? Math.max(0, parseFloat(sAttr)) : 0.8;
+      const l = lAttr != null ? Math.max(0, parseFloat(lAttr)) : 120;
+      (this.#engine as any).setBHStreaks?.(s, l);
+    } else if (name === 'bh-accretion-speed') {
+      const sAttr = this.getAttribute('bh-accretion-speed');
+      const s = sAttr != null ? Math.max(0, parseFloat(sAttr)) : 0.25;
+      (this.#engine as any).setBHAccretionSpeed?.(s);
     } else if (name === 'bh-enabled') {
       const v = this.getAttribute('bh-enabled');
       (this.#engine as any).setBlackHoleEnabled?.(v != null ? v !== 'false' : false);
@@ -607,6 +622,9 @@ export class AbyssVeilElement extends HTMLElement {
         <summary>Black hole</summary>
         <div class="row"><label>Mass</label><input type="range" id="rng-bh-mass" min="0.1" max="3.0" step="0.01" value="1.0"><span id="val-bh-mass" class="muted">1.00</span></div>
         <div class="row"><label>Spin</label><input type="range" id="rng-bh-spin" min="0.0" max="1.0" step="0.01" value="0.70"><span id="val-bh-spin" class="muted">0.70</span></div>
+        <div class="row"><label>Arc strength</label><input type="range" id="rng-bh-streak-strength" min="0" max="2" step="0.01" value="0.80"><span id="val-bh-streak-strength" class="muted">0.80</span></div>
+        <div class="row"><label>Arc length (px)</label><input type="range" id="rng-bh-streak-length" min="0" max="400" step="1" value="120"><span id="val-bh-streak-length" class="muted">120</span></div>
+        <div class="row"><label>Accretion speed</label><input type="range" id="rng-bh-accretion-speed" min="0" max="2" step="0.01" value="0.25"><span id="val-bh-accretion-speed" class="muted">0.25</span></div>
       </details>
       </div>
     `;
@@ -671,6 +689,9 @@ export class AbyssVeilElement extends HTMLElement {
     initNum('#rng-streak-angle', 'lens-streak-angle', 0, (n)=>n.toFixed(0));
     initNum('#rng-bh-mass', 'bh-mass', 1.0, (n)=>n.toFixed(2));
     initNum('#rng-bh-spin', 'bh-spin', 0.7, (n)=>n.toFixed(2));
+    initNum('#rng-bh-streak-strength', 'bh-streak-strength', 0.8, (n)=>n.toFixed(2));
+    initNum('#rng-bh-streak-length', 'bh-streak-length', 120, (n)=>n.toFixed(0));
+    initNum('#rng-bh-accretion-speed', 'bh-accretion-speed', 0.25, (n)=>n.toFixed(2));
 
     // Wire events
     (this.#controls!.querySelector('#chk-stars') as HTMLInputElement).addEventListener('change', (e) => {
@@ -777,6 +798,15 @@ export class AbyssVeilElement extends HTMLElement {
     });
     (this.#controls!.querySelector('#rng-bh-spin') as HTMLInputElement).addEventListener('input', (e) => {
       const v = (e.target as HTMLInputElement).valueAsNumber; setText('#val-bh-spin', v.toFixed(2)); this.setAttribute('bh-spin', String(v));
+    });
+    (this.#controls!.querySelector('#rng-bh-streak-strength') as HTMLInputElement).addEventListener('input', (e) => {
+      const v = (e.target as HTMLInputElement).valueAsNumber; setText('#val-bh-streak-strength', v.toFixed(2)); this.setAttribute('bh-streak-strength', String(v));
+    });
+    (this.#controls!.querySelector('#rng-bh-streak-length') as HTMLInputElement).addEventListener('input', (e) => {
+      const v = (e.target as HTMLInputElement).valueAsNumber; setText('#val-bh-streak-length', v.toFixed(0)); this.setAttribute('bh-streak-length', String(v));
+    });
+    (this.#controls!.querySelector('#rng-bh-accretion-speed') as HTMLInputElement).addEventListener('input', (e) => {
+      const v = (e.target as HTMLInputElement).valueAsNumber; setText('#val-bh-accretion-speed', v.toFixed(2)); this.setAttribute('bh-accretion-speed', String(v));
     });
   }
 

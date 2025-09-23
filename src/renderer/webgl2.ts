@@ -72,6 +72,8 @@ export class WebGL2Engine implements IRenderer {
   private lensCenterX = 0.5; private lensCenterY = 0.5;
   private lensMode: 'glass' | 'blackhole' = 'glass';
   private bhMass = 1.0; private bhSpin = 0.7;
+  private bhCenterX = 0.5; private bhCenterY = 0.5; private bhRadiusPx = 100;
+  private bhStreakStrength = 0.8; private bhStreakLengthPx = 120; private bhAccretionSpeed = 0.25;
   private bloomStrength = 0.6; private bloomThreshold = 0.7; private bloomRadiusPx = 8;
   private streakStrength = 0.8; private streakLengthPx = 120; private streakAngleDeg = 0;
   private showStars = true; private showGalaxy = true; private showNebula = true; private lensEnabled = true;
@@ -164,8 +166,10 @@ export class WebGL2Engine implements IRenderer {
     if (this.lens) this.lens.setCenter(clampedX, clampedY);
   }
   setLensMode(mode: 'glass'|'blackhole') { this.lensMode = mode; /* lens mode no longer controls black hole */ }
-  setBHParams(mass: number, spin: number) { this.bhMass = mass; this.bhSpin = spin; if (this.bh) this.bh.setParams(mass, spin); }
-  setBlackHoleEnabled(enabled: boolean) { this.bhEnabled = enabled; }
+  setBHParams(mass: number, spin: number) { this.bhMass = mass; this.bhSpin = spin; if (this.bh) this.bh.setParams(mass, spin); if (this.stars) (this.stars as any).setBHAttractor?.(this.bhCenterX, this.bhCenterY, this.bhRadiusPx, this.bhEnabled ? this.bhMass : 0.0); }
+  setBlackHoleEnabled(enabled: boolean) { this.bhEnabled = enabled; if (this.stars) (this.stars as any).setBHAttractor?.(this.bhCenterX, this.bhCenterY, this.bhRadiusPx, this.bhEnabled ? this.bhMass : 0.0); }
+  setBHStreaks(strength: number, lengthPx: number) { this.bhStreakStrength = Math.max(0, strength); this.bhStreakLengthPx = Math.max(0, lengthPx); if (this.bh) this.bh.setStreaks(this.bhStreakStrength, this.bhStreakLengthPx); }
+  setBHAccretionSpeed(speed: number) { this.bhAccretionSpeed = Math.max(0, speed); if (this.bh) (this.bh as any).setAccretionSpeed?.(this.bhAccretionSpeed); }
   setLensBloom(strength: number, threshold: number, radiusPx: number) { this.bloomStrength = strength; this.bloomThreshold = threshold; this.bloomRadiusPx = radiusPx; }
   setLensStreaks(strength: number, lengthPx: number, angleDeg: number) { this.streakStrength = strength; this.streakLengthPx = lengthPx; this.streakAngleDeg = angleDeg; }
   setShowStars(show: boolean) { this.showStars = show; }
@@ -203,6 +207,8 @@ export class WebGL2Engine implements IRenderer {
     this.stars.setViewport(this.canvas.width, this.canvas.height);
     (this.stars as any).setTwinkleSpeed?.(this.twinkleSpeed);
     (this.stars as any).setTwinkleAmount?.(this.twinkleAmount);
+    // Initialize BH attractor (disabled if not enabled)
+    (this.stars as any).setBHAttractor?.(this.bhCenterX, this.bhCenterY, this.bhRadiusPx, this.bhEnabled ? this.bhMass : 0.0);
 
     this.galaxy = new WebGL2GalaxyPass(gl);
     this.nebula = new WebGL2NebulaPass(gl);
@@ -245,6 +251,10 @@ export class WebGL2Engine implements IRenderer {
 
     this.bh = new WebGL2BlackHolePass(gl);
     this.bh.setParams(this.bhMass, this.bhSpin);
+    (this.bh as any).setCenter?.(this.bhCenterX, this.bhCenterY);
+    (this.bh as any).setRadiusPx?.(this.bhRadiusPx);
+    this.bh.setStreaks(this.bhStreakStrength, this.bhStreakLengthPx);
+    (this.bh as any).setAccretionSpeed?.(this.bhAccretionSpeed);
 
     // 1x1 black texture for convenience
     this.blackTex = gl.createTexture()!;
@@ -302,6 +312,7 @@ export class WebGL2Engine implements IRenderer {
       this.nebula.setTime(t);
       (this.stars as any).setTime?.(t);
       (this.galaxy as any).setTime?.(t);
+      (this.bh as any)?.setTime?.(t);
 
       // Stars to FBO
       gl.bindFramebuffer(gl.FRAMEBUFFER, this.fboStars);
@@ -381,7 +392,8 @@ export class WebGL2Engine implements IRenderer {
         if (this.lensEnabled) {
           this.lens?.setParams(this.lensRadiusPx, this.lensZoom, this.lensDispersion);
           this.lens?.setCenter(this.lensCenterX, this.lensCenterY);
-          this.lens?.setEffects(this.bloomStrength, this.bloomThreshold, this.bloomRadiusPx, this.streakStrength, this.streakLengthPx, this.streakAngleDeg);
+          // Disable lens bloom and streaks when BH is enabled
+          this.lens?.setEffects(0.0, this.bloomThreshold, this.bloomRadiusPx, 0.0, this.streakLengthPx, this.streakAngleDeg);
           this.lens?.render(this.texBH!, this.blackTex!, this.canvas.width, this.canvas.height);
         }
       } else {
@@ -396,7 +408,7 @@ export class WebGL2Engine implements IRenderer {
           this.lens?.setParams(this.lensRadiusPx, this.lensZoom, this.lensDispersion);
           this.lens?.setCenter(this.lensCenterX, this.lensCenterY);
           this.lens?.setEffects(this.bloomStrength, this.bloomThreshold, this.bloomRadiusPx, this.streakStrength, this.streakLengthPx, this.streakAngleDeg);
-          this.lens?.render(this.texStars!, this.texGalaxy!, this.canvas.width, this.canvas.height);
+          this.lens?.render(this.texBH!, this.blackTex!, this.canvas.width, this.canvas.height);
         }
       }
     }
