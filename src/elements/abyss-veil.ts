@@ -16,8 +16,8 @@ export class AbyssVeilElement extends HTMLElement {
   // Controls move/collapse state
   #wrap!: HTMLDivElement;
   #controlsCollapsed = true;
-  #controlsPosX = 12;
-  #controlsPosY = 12;
+  #controlsPosX = 24;
+  #controlsPosY = 24;
   #ctrlDragging = false;
   #ctrlDragOffsetX = 0;
   #ctrlDragOffsetY = 0;
@@ -41,8 +41,8 @@ export class AbyssVeilElement extends HTMLElement {
     const style = document.createElement('style');
     style.textContent = `
       :host, .wrap { display: block; width: 100%; height: 100%; contain: content; position: relative; }
-      canvas { width: 100%; height: 100%; display: block; }
-      .controls { position: absolute; top: 12px; left: 12px; background: rgba(10,13,20,0.8); color: #cbd5e1; border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 10px 12px; font: 12px/1.4 system-ui, -apple-system, Segoe UI, Roboto, sans-serif; backdrop-filter: blur(4px); max-width: 320px; z-index: 20; box-shadow: 0 12px 24px rgba(0,0,0,0.35); }
+      canvas { width: 100%; height: 100%; display: block; touch-action: none; }
+      .controls { position: absolute; top: 12px; left: 12px; background: rgba(10,13,20,0.8); color: #cbd5e1; border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 10px 12px; font: 12px/1.4 system-ui, -apple-system, Segoe UI, Roboto, sans-serif; backdrop-filter: blur(4px); max-width: 320px; z-index: 20; box-shadow: 0 12px 24px rgba(0,0,0,0.35); max-height: calc(100% - 24px); overflow: auto; }
       .controls h3 { margin: 6px 0 6px; font-size: 12px; color: #93c5fd; }
       .row { display: flex; align-items: center; gap: 6px; margin: 4px 0; }
       .row label { flex: 1 1 auto; }
@@ -52,14 +52,14 @@ export class AbyssVeilElement extends HTMLElement {
       .grid { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 6px 8px; }
       .muted { color: #9aa4b2; }
       /* Header/drag handle */
-      .ctrl-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: -6px -8px 8px; padding: 6px 8px; background: rgba(255,255,255,0.04); border-radius: 6px; cursor: grab; user-select: none; }
+      .ctrl-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: -6px -8px 8px; padding: 6px 8px; background: rgba(255,255,255,0.04); border-radius: 6px; cursor: grab; user-select: none; touch-action: none; }
       .controls.dragging .ctrl-header { cursor: grabbing; }
       .ctrl-title { font-weight: 600; font-size: 12px; color: #e5e7eb; letter-spacing: 0.02em; }
       .btn-icon { appearance: none; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.06); color: #cbd5e1; border-radius: 6px; padding: 4px 8px; font: inherit; cursor: pointer; }
       .btn-icon:hover { background: rgba(255,255,255,0.12); }
       .btn-icon:focus-visible { outline: 2px solid #93c5fd; outline-offset: 2px; }
       /* Floating toggle button */
-      .controls-toggle { position: absolute; top: 12px; left: 12px; width: 40px; height: 40px; border-radius: 999px; background: rgba(10,13,20,0.9); border: 1px solid rgba(255,255,255,0.12); color: #cbd5e1; display: none; align-items: center; justify-content: center; font: 16px/1 system-ui, -apple-system, Segoe UI, Roboto, sans-serif; cursor: grab; z-index: 21; box-shadow: 0 12px 24px rgba(0,0,0,0.4); }
+      .controls-toggle { position: absolute; top: 12px; left: 12px; width: 48px; height: 48px; border-radius: 999px; background: rgba(10,13,20,0.9); border: 1px solid rgba(255,255,255,0.12); color: #cbd5e1; display: none; align-items: center; justify-content: center; font: 20px/1 system-ui, -apple-system, Segoe UI, Roboto, sans-serif; cursor: grab; touch-action: none; z-index: 21; box-shadow: 0 12px 24px rgba(0,0,0,0.4); }
       .controls-toggle.dragging { cursor: grabbing; }
       .controls-toggle:focus-visible { outline: 2px solid #93c5fd; outline-offset: 2px; }
       /* Toggle switch */
@@ -207,7 +207,8 @@ export class AbyssVeilElement extends HTMLElement {
 
     // pointer interactions for draggable lens
     const onPointerDown = (e: PointerEvent) => {
-      if (e.button !== 0) return; // only left button starts drag
+      // Only restrict to left button for mouse; allow touch/pen unconditionally
+      if (e.pointerType === 'mouse' && e.button !== 0) return; // only left button starts drag
       const rect = this.#canvas.getBoundingClientRect();
       const x = e.clientX - rect.left; const y = e.clientY - rect.top;
       // Hit-test: start drag only if pointer is within current lens circle

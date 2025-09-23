@@ -12,6 +12,30 @@
     <style>
       html, body, #app { height: 100%; margin: 0; background: #0b0f16; }
       .stage { position: fixed; inset: 0; }
+      .copyright-badge {
+        position: fixed;
+        left: 24px;
+        bottom: 24px;
+        z-index: 1000;
+        font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+        font-size: 14px;
+        line-height: 1;
+        color: #cbd5e1;
+        background: rgba(0, 0, 0, 0.45);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 8px;
+        padding: 12px;
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
+        box-shadow: 0 2px 12px rgba(0,0,0,0.35);
+      }
+      .copyright-badge a {
+        color: #e2e8f0;
+        text-decoration: none;
+      }
+      .copyright-badge a:hover {
+        text-decoration: underline;
+      }
     </style>
   </head>
   <body>
@@ -47,6 +71,9 @@
       lens-streak-length="17"
       lens-streak-angle="0"
     ></abyss-veil>
+    </div>
+    <div class="copyright-badge">
+      © <a href="https://rahulk.design" target="_blank" rel="noopener noreferrer">Rahul kumar</a> 2025
     </div>
     <script type="module" src="/src/main.ts"></script>
   </body>
