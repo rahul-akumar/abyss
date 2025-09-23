@@ -59,13 +59,13 @@ export class AbyssVeilElement extends HTMLElement {
       .btn-icon:hover { background: rgba(255,255,255,0.12); }
       .btn-icon:focus-visible { outline: 2px solid #93c5fd; outline-offset: 2px; }
       /* Floating toggle button */
-      .controls-toggle { position: absolute; top: 12px; left: 12px; width: 48px; height: 48px; border-radius: 999px; background: rgba(10,13,20,0.9); border: 1px solid rgba(255,255,255,0.12); color: #cbd5e1; display: none; align-items: center; justify-content: center; font: 20px/1 system-ui, -apple-system, Segoe UI, Roboto, sans-serif; cursor: grab; touch-action: none; z-index: 21; box-shadow: 0 12px 24px rgba(0,0,0,0.4); }
+      .controls-toggle { position: absolute; top: 12px; left: 12px; width: 48px; height: 48px; border-radius: 999px; background: rgba(10,13,20,0.9); border: 1px solid rgba(255, 255, 255, 0.24); color: #cbd5e1; display: none; align-items: center; justify-content: center; font: 20px/1 system-ui, -apple-system, Segoe UI, Roboto, sans-serif; cursor: grab; touch-action: none; z-index: 21; box-shadow: 0 12px 24px rgba(0,0,0,0.4); }
       .controls-toggle.dragging { cursor: grabbing; }
       .controls-toggle:focus-visible { outline: 2px solid #93c5fd; outline-offset: 2px; }
       /* Toggle switch */
       .switch { position: relative; display: inline-block; width: 38px; height: 22px; }
       .switch input { opacity: 0; width: 0; height: 0; }
-      .slider { position: absolute; cursor: pointer; inset: 0; background: #475569; transition: 0.2s ease; border-radius: 999px; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.15); }
+      .slider { position: absolute; cursor: pointer; inset: 0; background:rgb(20, 27, 36); transition: 0.2s ease; border-radius: 999px; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.15); }
       .slider:before { content: ""; position: absolute; height: 16px; width: 16px; left: 3px; top: 3px; background: #e2e8f0; border-radius: 50%; transition: 0.2s ease; }
       .switch input:checked + .slider { background: #22c55e; }
       .switch input:checked + .slider:before { transform: translateX(16px); }

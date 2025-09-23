@@ -23,7 +23,7 @@ export class WebGL2LensPass {
   private uBHSpin!: WebGLUniformLocation;
 
   private center = { x: 0.5, y: 0.5 };
-  private radiusPx = 200;
+  private radiusPx = 240;
   private zoom = 1.25;
   private dispersion = 0.35;
   private bloomStrength = 0.6; private bloomThreshold = 0.7; private bloomRadiusPx = 8.0;

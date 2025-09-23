@@ -12,7 +12,7 @@ export class WebGPULensPass {
   private galaxyView?: GPUTextureView;
   private viewport = { w: 1, h: 1 };
   private center = { x: 0.5, y: 0.5 };
-  private radiusPx = 200;
+  private radiusPx = 240;
   private zoom = 1.25;
   private dispersion = 0.35;
   private mode = 0; // 0 glass
